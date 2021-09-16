@@ -55,4 +55,8 @@ public class EXRFormat extends AbstractFormat {
 	public static class Checker extends AbstractChecker {
 		
 	}
+	
+	public static class Reader {
+		
+	}
 }
