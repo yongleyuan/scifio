@@ -1,6 +1,7 @@
 
 package io.scif.formats;
 
+import io.scif.AbstractChecker;
 import io.scif.AbstractFormat;
 import io.scif.AbstractMetadata;
 import io.scif.AbstractParser;
@@ -49,5 +50,9 @@ public class EXRFormat extends AbstractFormat {
 			// TODO Auto-generated method stub
 			
 		}
+	}
+	
+	public static class Checker extends AbstractChecker {
+		
 	}
 }
