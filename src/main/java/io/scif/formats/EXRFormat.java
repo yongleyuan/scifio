@@ -2,6 +2,7 @@
 package io.scif.formats;
 
 import io.scif.AbstractFormat;
+import io.scif.AbstractMetadata;
 import io.scif.Format;
 
 import org.scijava.plugin.Plugin;
@@ -20,5 +21,16 @@ public class EXRFormat extends AbstractFormat {
 	protected String[] makeSuffixArray() {
 		return new String[] { "exr" };
 	}
+	
+	// -- Nested Classes --
+	
+	public static class Metadata extends AbstractMetadata {
 
+		@Override
+		public void populateImageMetadata() {
+			// TODO Auto-generated method stub
+			
+		}
+		
+	}
 }
