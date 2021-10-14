@@ -44,7 +44,7 @@ public class EXRFormat extends AbstractFormat {
 	 * defined by the combination of bit 9, 11, and 12, which are commented after
 	 * each type.
 	 */
-	private enum FileType {
+	private static enum FileType {
 			SINGLE_SCAN_LINE, // 0 0 0
 			SINGLE_TILE, // 1 0 0
 			MULTI_PART, // 0 0 1
@@ -104,6 +104,19 @@ public class EXRFormat extends AbstractFormat {
 		{
 			this.pixelType = pixelType == 0 ? PixelType.UNIT : pixelType == 1
 				? PixelType.HALF : PixelType.FLOAT;
+			switch (pixelType) {
+				case 0:
+					this.pixelType = PixelType.UNIT;
+					break;
+				case 1:
+					this.pixelType = PixelType.HALF;
+					break;
+				case 2:
+					this.pixelType = PixelType.FLOAT;
+					break;
+				default:
+					throw new IllegalArgumentException("Pixel type not recognized.");
+			}
 			this.name = name;
 			this.pLinear = pLinear;
 			this.xSampling = xSampling;
@@ -206,10 +219,29 @@ public class EXRFormat extends AbstractFormat {
 		int mode;
 
 		TileDesc(int levelMode, int roundingMode, int xSize, int ySize) {
-			this.levelMode = levelMode == 0 ? LevelMode.ONE_LEVEL : levelMode == 1
-				? LevelMode.MIPMAP_LEVELS : LevelMode.RIPMAP_LEVELS;
-			this.roundingMode = roundingMode == 0 ? RoundingMode.ROUND_DOWN
-				: RoundingMode.ROUND_UP;
+			switch (levelMode) {
+				case 0:
+					this.levelMode = LevelMode.ONE_LEVEL;
+					break;
+				case 1:
+					this.levelMode = LevelMode.MIPMAP_LEVELS;
+					break;
+				case 2:
+					this.levelMode = LevelMode.RIPMAP_LEVELS;
+					break;
+				default:
+					throw new IllegalArgumentException("Level mode not recognized.");
+			}
+			switch (roundingMode) {
+				case 0:
+					this.roundingMode = RoundingMode.ROUND_DOWN;
+					break;
+				case 1:
+					this.roundingMode = RoundingMode.ROUND_UP;
+					break;
+				default:
+					throw new IllegalArgumentException("Level mode not recognized.");
+			}
 			this.xSize = xSize;
 			this.ySize = ySize;
 			this.mode = levelMode + roundingMode * 16;
@@ -269,12 +301,39 @@ public class EXRFormat extends AbstractFormat {
 		/**
 		 * Standard constructor that assigns attributes for all kinds of headers.
 		 */
-		Header(Chlist channels, Compression compression, Box2i dataWindow,
+		Header(Chlist channels, int compression, Box2i dataWindow,
 			Box2i displayWindow, LineOrder lineOrder, float pixelAspectRatio,
 			int centerX, int centerY, float screenWindowWidth)
 		{
 			this.channels = channels;
-			this.compression = compression;
+			switch (compression) {
+				case 0:
+					this.compression = Compression.NO_COMPRESSION;
+					break;
+				case 1:
+					this.compression = Compression.RLE_COMPRESSION;
+					break;
+				case 2:
+					this.compression = Compression.ZIPS_COMPRESSION;
+					break;
+				case 3:
+					this.compression = Compression.ZIP_COMPRESSION;
+					break;
+				case 4:
+					this.compression = Compression.PIZ_COMPRESSION;
+					break;
+				case 5:
+					this.compression = Compression.PXR24_COMPRESSION;
+					break;
+				case 6:
+					this.compression = Compression.B44_COMPRESSION;
+					break;
+				case 7:
+					this.compression = Compression.B44A_COMPRESSION;
+					break;
+				default:
+					throw new IllegalArgumentException("Compression not recognized.");
+			}
 			this.dataWindow = dataWindow;
 			this.displayWindow = displayWindow;
 			this.lineOrder = lineOrder;
@@ -285,7 +344,7 @@ public class EXRFormat extends AbstractFormat {
 		}
 
 		/** Overload constructor for tile headers. */
-		Header(Chlist channels, Compression compression, Box2i dataWindow,
+		Header(Chlist channels, int compression, Box2i dataWindow,
 			Box2i displayWindow, LineOrder lineOrder, float pixelAspectRatio,
 			int centerX, int centerY, float screenWindowWidth, TileDesc tiles)
 		{
@@ -295,7 +354,7 @@ public class EXRFormat extends AbstractFormat {
 		}
 
 		/** Overload constructor for multi-view tile headers. */
-		Header(Chlist channels, Compression compression, Box2i dataWindow,
+		Header(Chlist channels, int compression, Box2i dataWindow,
 			Box2i displayWindow, LineOrder lineOrder, float pixelAspectRatio,
 			int centerX, int centerY, float screenWindowWidth, String view)
 		{
@@ -305,7 +364,7 @@ public class EXRFormat extends AbstractFormat {
 		}
 
 		/** Overload constructor for multi-part and deep data headers. */
-		Header(Chlist channels, Compression compression, Box2i dataWindow,
+		Header(Chlist channels, int compression, Box2i dataWindow,
 			Box2i displayWindow, LineOrder lineOrder, float pixelAspectRatio,
 			int centerX, int centerY, float screenWindowWidth, String name,
 			String type, int version, int chunkCount, TileDesc tiles)
@@ -320,7 +379,7 @@ public class EXRFormat extends AbstractFormat {
 		}
 
 		/** Overload constructor for deep data headers. */
-		Header(Chlist channels, Compression compression, Box2i dataWindow,
+		Header(Chlist channels, int compression, Box2i dataWindow,
 			Box2i displayWindow, LineOrder lineOrder, float pixelAspectRatio,
 			int centerX, int centerY, float screenWindowWidth, TileDesc tiles,
 			int maxSamplesPerPixel, int version, String type)
@@ -333,24 +392,134 @@ public class EXRFormat extends AbstractFormat {
 			this.type = type;
 		}
 	}
-	
+
 	/**
 	 * Component 4 - Offset Table
 	 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#component-four-offset-tables
 	 * TODO Write class description here
 	 */
 	private static class OffsetTable {
+
 		int numEntries;
 		int[] table; // TODO accommodate multi-part type
+
+		OffsetTable(int numEntries, int[] table) {
+			this.numEntries = numEntries;
+			this.table = table;
+		}
+
 	}
-	
+
 	/**
 	 * Component 5 - Pixel Data
 	 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#component-five-pixel-data
 	 * TODO Write class description here
 	 */
 	private static class PixelData {
+
 		int partNum; // if multi-part bit is set
+		ScanLine scanLine;
+		ImageTile tile;
+		DeepDataScanLine deepScanLine;
+		DeepDataTile deepTile;
+	}
+
+	private static class ScanLineBlock {
+
+		int yCoordinate;
+		int pixelDataSize;
+		int[] pixelData;
+
+		ScanLineBlock(int yCoordinate, int pixelDataSize, int[] pixelData) {
+			this.yCoordinate = yCoordinate;
+			this.pixelDataSize = pixelDataSize;
+			this.pixelData = pixelData;
+		}
+	}
+
+	private static class ScanLine {
+
+		int pixelDataSize; // number of bytes occupied by the pixel data
+		ScanLineBlock[] blocks;
+
+		ScanLine(int pixelDataSize, ScanLineBlock[] blocks) {
+			this.pixelDataSize = pixelDataSize;
+			this.blocks = blocks;
+		}
+	}
+
+	private static class TileCoordinates {
+
+		int tileX;
+		int tileY;
+		int levelX;
+		int levelY;
+
+		TileCoordinates(int tileX, int tileY, int levelX, int levelY) {
+			this.tileX = tileX;
+			this.tileY = tileY;
+			this.levelX = levelX;
+			this.levelY = levelY;
+		}
+	}
+
+	private static class ImageTile {
+
+		TileCoordinates tileCoordinates;
+		int pixelDataSize; // number of bytes occupied by the pixel data
+		int[] pixelData;
+
+		ImageTile(TileCoordinates tileCoordinates, int pixelDataSize,
+			int[] pixelData)
+		{
+			this.tileCoordinates = tileCoordinates;
+			this.pixelDataSize = pixelDataSize;
+			this.pixelData = pixelData;
+		}
+	}
+
+	private static class DeepDataScanLine {
+
+		int yCoordinate;
+		long packedSizeOffsetTable;
+		long packedSizeSampleData;
+		long unpackedSizeSampleData;
+		int[] compressedOffsetTable;
+		int[] compressesSampleData;
+
+		DeepDataScanLine(int yCoordinate, long packedSizeOffsetTable,
+			long packedSizeSampleData, long unpackedSizeSampleData,
+			int[] compressedOffsetTable, int[] compressesSampleData)
+		{
+			this.yCoordinate = yCoordinate;
+			this.packedSizeOffsetTable = packedSizeOffsetTable;
+			this.packedSizeSampleData = packedSizeSampleData;
+			this.unpackedSizeSampleData = unpackedSizeSampleData;
+			this.compressedOffsetTable = compressedOffsetTable;
+			this.compressesSampleData = compressesSampleData;
+		}
+	}
+
+	private static class DeepDataTile {
+
+		TileCoordinates tileCoordinates;
+		long packedSizeOffsetTable;
+		long packedSizeSampleData;
+		long unpackedSizeSampleData;
+		int[] compressedOffsetTable;
+		int[] compressedSampleData;
+
+		DeepDataTile(TileCoordinates tileCoordinates, long packedSizeOffsetTable,
+			long packedSizeSampleData, long unpackedSizeSampleData,
+			int[] compressedOffsetTable, int[] compressedSampleData)
+		{
+			this.tileCoordinates = tileCoordinates;
+			this.packedSizeOffsetTable = packedSizeOffsetTable;
+			this.packedSizeSampleData = packedSizeSampleData;
+			this.unpackedSizeSampleData = unpackedSizeSampleData;
+			this.compressedOffsetTable = compressedOffsetTable;
+			this.compressedSampleData = compressedSampleData;
+		}
 	}
 
 	/**
@@ -371,13 +540,6 @@ public class EXRFormat extends AbstractFormat {
 
 		// -- Fields --
 
-		/**
-		 * Component 1 & 2 - Magic number, Version, and Flags
-		 * <p>
-		 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#version-field
-		 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#version-field-valid-values
-		 */
-
 		/** Version of OpenEXR file. Stored from bit 0 to 7 */
 		private int version;
 
@@ -397,16 +559,31 @@ public class EXRFormat extends AbstractFormat {
 		 * <p>
 		 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#component-four-offset-tables
 		 */
-
-		// TODO Add fields related to Offset table
+		private OffsetTable offsetTable;
 
 		/**
 		 * Component 5 - Pixel data
 		 * <p>
 		 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#component-five-pixel-data
 		 */
+		private PixelData pixelData;
 
-		// TODO Add fields related to Pixel data
+		// -- Fields --
+
+		/**
+		 * Component 1 & 2 - Magic number, Version, and Flags
+		 * <p>
+		 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#version-field
+		 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#version-field-valid-values
+		 */
+
+		public FileType getFileType() {
+			return fileType;
+		}
+
+		public void setFileType(FileType fileType) {
+			this.fileType = fileType;
+		}
 
 		@Override
 		public void populateImageMetadata() {
@@ -427,8 +604,26 @@ public class EXRFormat extends AbstractFormat {
 		protected void typedParse(DataHandle<Location> handle, Metadata meta,
 			SCIFIOConfig config) throws IOException, FormatException
 		{
-			// TODO Auto-generated method stub
-
+			switch (meta.getFileType()) {
+				case SINGLE_SCAN_LINE:
+					// TODO
+					break;
+				case SINGLE_TILE:
+					// TODO
+					break;
+				case MULTI_PART:
+					// TODO
+					break;
+				case SINGLE_PART_DEEP:
+					// TODO
+					break;
+				case MULTI_PART_DEEP:
+					// TODO
+					break;
+				default:
+					throw new IllegalArgumentException(
+						"Metadata's file type is not recognized.");
+			}
 		}
 	}
 
