@@ -7,6 +7,7 @@ import io.scif.AbstractMetadata;
 import io.scif.AbstractParser;
 import io.scif.Format;
 import io.scif.FormatException;
+import io.scif.ImageMetadata;
 import io.scif.config.SCIFIOConfig;
 
 import java.io.IOException;
@@ -584,7 +585,7 @@ public class EXRFormat extends AbstractFormat {
 		public void setFileType(FileType fileType) {
 			this.fileType = fileType;
 		}
-
+		
 		@Override
 		public void populateImageMetadata() {
 			// TODO Auto-generated method stub
@@ -604,8 +605,15 @@ public class EXRFormat extends AbstractFormat {
 		protected void typedParse(DataHandle<Location> handle, Metadata meta,
 			SCIFIOConfig config) throws IOException, FormatException
 		{
+			// check magic number
+			log().info("Verifying EXR magic number");
+			// TODO
+			
 			switch (meta.getFileType()) {
 				case SINGLE_SCAN_LINE:
+					meta.createImageMetadata(1);
+					
+					final ImageMetadata m = meta.get(0);
 					// TODO
 					break;
 				case SINGLE_TILE:
