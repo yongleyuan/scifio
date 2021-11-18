@@ -5,13 +5,13 @@
 	<parent>
 		<groupId>org.scijava</groupId>
 		<artifactId>pom-scijava</artifactId>
-		<version>30.0.0</version>
+		<version>31.1.0</version>
 		<relativePath />
 	</parent>
 
 	<groupId>io.scif</groupId>
 	<artifactId>scifio</artifactId>
-	<version>0.42.1-SNAPSHOT</version>
+	<version>0.43.1-SNAPSHOT</version>
 
 	<name>SCIFIO Core</name>
 	<description>SCIFIO is a library for scientific N-dimensional image I/O.</description>
@@ -98,7 +98,7 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/scifio/scifio</connection>
+		<connection>scm:git:https://github.com/scifio/scifio</connection>
 		<developerConnection>scm:git:git@github.com:scifio/scifio</developerConnection>
 		<tag>HEAD</tag>
 		<url>https://github.com/scifio/scifio</url>
@@ -121,6 +121,7 @@
 
 		<!-- NB: Deploy releases to the SciJava Maven repository. -->
 		<releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
+
 		<xdg-java.version>0.1.1</xdg-java.version>
 	</properties>
 
