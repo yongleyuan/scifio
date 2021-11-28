@@ -26,6 +26,17 @@ public class EXRFormat extends AbstractFormat {
 
 	// -- AbstractFormat Methods --
 
+	// -- Constants --
+	
+	/**
+	 * Magic number is fixed. It allows file reader to distinguish OpenEXR files
+	 * from other files. Magic number if always the first 4 bytes of an OpenEXR
+	 * file. Store in the first byte (first 8 bits).
+	 * <p>
+	 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#magic-number
+	 */
+	private static final int MAGIC_NUMBER = 20000630;
+
 	@Override
 	public String getFormatName() {
 		return "OpenEXR v2.0"; // TODO Might need to accommodate v1
@@ -530,17 +541,6 @@ public class EXRFormat extends AbstractFormat {
 
 		// -- Constants --
 
-		/**
-		 * Magic number is fixed. It allows file reader to distinguish OpenEXR files
-		 * from other files. Magic number if always the first 4 bytes of an OpenEXR
-		 * file. Store in the first byte (first 8 bits).
-		 * <p>
-		 * https://openexr.readthedocs.io/en/latest/OpenEXRFileLayout.html#magic-number
-		 */
-		private static final int MAGIC_NUMBER = 20000630;
-
-		// -- Fields --
-
 		/** Version of OpenEXR file. Stored from bit 0 to 7 */
 		private int version;
 
@@ -585,7 +585,7 @@ public class EXRFormat extends AbstractFormat {
 		public void setFileType(FileType fileType) {
 			this.fileType = fileType;
 		}
-		
+
 		@Override
 		public void populateImageMetadata() {
 			// TODO Auto-generated method stub
@@ -608,11 +608,11 @@ public class EXRFormat extends AbstractFormat {
 			// check magic number
 			log().info("Verifying EXR magic number");
 			// TODO
-			
+
 			switch (meta.getFileType()) {
 				case SINGLE_SCAN_LINE:
 					meta.createImageMetadata(1);
-					
+
 					final ImageMetadata m = meta.get(0);
 					// TODO
 					break;
@@ -637,6 +637,23 @@ public class EXRFormat extends AbstractFormat {
 
 	public static class Checker extends AbstractChecker {
 
+		@Override
+		public boolean suffixSufficient() {
+			return false;
+		}
+
+		@Override
+		public boolean isFormat(final DataHandle<Location> stream)
+			throws IOException
+		{
+			stream.setLittleEndian(true);
+			stream.seek(0); // start at the beginning of the file
+			if (stream.readInt() != MAGIC_NUMBER) {
+				return false;
+			}
+
+			return true;
+		}
 	}
 
 	public static class Reader {
